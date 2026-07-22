@@ -16,29 +16,52 @@ def pytest_addoption(parser):
         default="chrome",
         help="Browser options: chrome, edge, firefox",
     )
+    parser.addoption(
+        "--headless",
+        action="store_true",
+        default=True,
+        help="Run browser in headless mode (default: True for CI execution)",
+    )
 
 
 @pytest.fixture()
 def setup(request):
     browser = request.config.getoption("--browser")
+    is_headless = request.config.getoption("--headless")
 
     if browser.lower() == "chrome":
         options = Options()
-        options.add_experimental_option("detach", True)
+
+        # Enable Headless execution & force desktop viewport size for Jenkins/CI
+        if is_headless:
+            options.add_argument("--headless=new")
+
+        options.add_argument("--window-size=1920,1080")
+        options.add_argument("--start-maximized")
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-dev-shm-usage")
+        options.add_argument("--disable-gpu")
+
         driver = webdriver.Chrome(options=options)
 
     elif browser.lower() == "edge":
         options = EdgeOptions()
+        if is_headless:
+            options.add_argument("--headless=new")
+        options.add_argument("--window-size=1920,1080")
         driver = webdriver.Edge(options=options)
 
     elif browser.lower() == "firefox":
         options = FirefoxOptions()
+        if is_headless:
+            options.add_argument("-headless")
+        options.add_argument("--width=1920")
+        options.add_argument("--height=1080")
         driver = webdriver.Firefox(options=options)
 
     else:
         raise ValueError(f"Unsupported browser: {browser}")
 
-    driver.maximize_window()
     driver.implicitly_wait(10)
 
     yield driver
@@ -77,7 +100,9 @@ def pytest_metadata(metadata):
 def pytest_runtest_makereport(item, call):
     outcome = yield
     report = outcome.get_result()
-    extra = getattr(report, "extra", [])
+
+    # pytest-html v4 uses report.extras instead of report.extra
+    extras_list = getattr(report, "extras", [])
 
     if report.when == "call" and report.failed:
         driver = item.funcargs.get("setup")
@@ -103,7 +128,6 @@ def pytest_runtest_makereport(item, call):
                     f'style="width:300px; height:auto; margin:10px 0;" '
                     f'onclick="window.open(this.src)"/></div>'
                 )
-                extra.append(extras.html(html_embed))
+                extras_list.append(extras.html(html_embed))
 
-    report.extra = extra
-    
+    report.extras = extras_list
