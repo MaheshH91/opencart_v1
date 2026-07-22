@@ -1,0 +1,40 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environment
+.venv/
+venv/
+ENV/
+env/
+
+# Pytest / Test Artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+reports/*.html
+reports/*.xml
+screenshots/*.png
+logs/*.log
+*.log
+
+# Allure Reports (if generated locally)
+allure-results/
+allure-report/
+
+# IDE / Editor configurations
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS / System generated files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.DS_Store
+
+# Temporary / Local Config Override files
+*.tmp
+*.bak
